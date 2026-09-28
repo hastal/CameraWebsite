@@ -16,7 +16,7 @@ const camera = new THREE.PerspectiveCamera(
 const loader = new GLTFLoader();
 
 loader.load(
-    '/models/baked.glb',
+    `${import.meta.env.BASE_URL}models/baked.glb`,
     function (gltf) {
 
         const model = gltf.scene;
