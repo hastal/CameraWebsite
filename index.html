@@ -28,15 +28,40 @@
 
             <div class="camera-heading">
                 <div>
-                    <p class="camera-number">ARCHIVE No. 001</p>
-                    <h1>Tamron 24-70mm f/2.8</h1>
+                    <p class="camera-number" id="camera-number">
+                        ARCHIVE No. 001
+                    </p>
+
+                    <h1 id="camera-name">
+                        Tamron 24-70mm f/2.8
+                    </h1>
                 </div>
 
-                <p class="camera-year">YEAR · 19XX</p>
+                <p class="camera-year" id="camera-year">
+                    YEAR · 19XX
+                </p>
             </div>
 
 
-            <div id="viewer"></div>
+            <div class="viewer-wrapper">
+
+                <div id="viewer"></div>
+
+                <button
+                    class="camera-arrow camera-arrow-left"
+                    id="previous-camera"
+                    aria-label="Previous camera">
+                    ←
+                </button>
+
+                <button
+                    class="camera-arrow camera-arrow-right"
+                    id="next-camera"
+                    aria-label="Next camera">
+                    →
+                </button>
+
+            </div>
 
 
             <div class="viewer-hint">
@@ -49,22 +74,22 @@
 
                 <div class="spec">
                     <p>MANUFACTURER</p>
-                    <h3>tamron</h3>
+                    <h3 id="camera-manufacturer">Tamron</h3>
                 </div>
 
                 <div class="spec">
                     <p>TYPE</p>
-                    <h3>Camera type</h3>
+                    <h3 id="camera-type">Camera type</h3>
                 </div>
 
                 <div class="spec">
                     <p>FORMAT</p>
-                    <h3>27 mm</h3>
+                    <h3 id="camera-format">27 mm</h3>
                 </div>
 
                 <div class="spec">
                     <p>ORIGIN</p>
-                    <h3>martin je pejsek</h3>
+                    <h3 id="camera-origin">martin je pejsek</h3>
                 </div>
 
             </div>

@@ -97,12 +97,16 @@ nav a {
 
 /* ---------- 3D VIEWER ---------- */
 
+.viewer-wrapper {
+    position: relative;
+}
+
 #viewer {
     width: 100%;
     height: 65vh;
     min-height: 500px;
 
-   background: #eeeeec;
+    background: #eeeeec;
 
     overflow: hidden;
 }
@@ -114,6 +118,48 @@ nav a {
     display: block;
     width: 100%;
     height: 100%;
+}
+
+
+/* ---------- CAMERA NAVIGATION ARROWS ---------- */
+
+.camera-arrow {
+    position: absolute;
+
+    top: 50%;
+    transform: translateY(-50%);
+
+    z-index: 10;
+
+    border: none;
+    background: transparent;
+
+    color: #111;
+
+    font-size: 38px;
+    font-weight: 300;
+
+    cursor: pointer;
+
+    padding: 20px;
+
+    opacity: 0.65;
+
+    transition:
+        opacity 0.2s ease,
+        transform 0.2s ease;
+}
+
+.camera-arrow:hover {
+    opacity: 1;
+}
+
+.camera-arrow-left {
+    left: 0;
+}
+
+.camera-arrow-right {
+    right: 0;
 }
 
 
@@ -225,6 +271,15 @@ footer {
         height: 55vh;
         min-height: 400px;
     }
+
+
+    /* Smaller arrows on phones */
+
+    .camera-arrow {
+        font-size: 30px;
+        padding: 14px;
+    }
+
 
     .camera-info {
         grid-template-columns: repeat(2, 1fr);
