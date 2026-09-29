@@ -1,46 +1,84 @@
 <!DOCTYPE html>
-
-<html>
+<html lang="en">
 
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>Camera Archive</title>
 
     <link rel="stylesheet" href="style.css">
-
 </head>
 
 <body>
 
-    <header>
+    <header class="site-header">
+        <a class="logo" href="#">CAMERA ARCHIVE</a>
 
-        <h1>Camera Archive</h1>
-
-        <p>Interactive 3D camera collection</p>
-
+        <nav>
+            <a href="#">COLLECTION</a>
+            <a href="#">ABOUT</a>
+        </nav>
     </header>
 
 
-<main>
+    <main>
 
-    <section>
+        <section class="camera-page">
 
-        <h2>My Cameras</h2>
+            <div class="camera-heading">
+                <div>
+                    <p class="camera-number">ARCHIVE No. 001</p>
+                    <h1>Tamron 24-70mm f/2.8</h1>
+                </div>
 
-        <p>Explore historically interesting cameras in 3D.</p>
+                <p class="camera-year">YEAR · 19XX</p>
+            </div>
 
-        <div id="viewer"></div>
 
-    </section>
+            <div id="viewer"></div>
 
-</main>
+
+            <div class="viewer-hint">
+                <span>DRAG TO ROTATE</span>
+                <span>SCROLL TO ZOOM</span>
+            </div>
+
+
+            <div class="camera-info">
+
+                <div class="spec">
+                    <p>MANUFACTURER</p>
+                    <h3>tamron</h3>
+                </div>
+
+                <div class="spec">
+                    <p>TYPE</p>
+                    <h3>Camera type</h3>
+                </div>
+
+                <div class="spec">
+                    <p>FORMAT</p>
+                    <h3>27 mm</h3>
+                </div>
+
+                <div class="spec">
+                    <p>ORIGIN</p>
+                    <h3>martin je pejsek</h3>
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
 
 
     <footer>
-
-        <p>My 3D Camera Project</p>
-
+        <p>INTERACTIVE 3D CAMERA ARCHIVE</p>
+        <p>2026</p>
     </footer>
+
 
     <script type="module" src="main.js"></script>
 

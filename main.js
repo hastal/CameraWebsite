@@ -6,6 +6,9 @@ const viewer = document.getElementById('viewer');
 
 const scene = new THREE.Scene();
 
+scene.background = new THREE.Color(0xC2C2C2);
+
+
 const camera = new THREE.PerspectiveCamera(
     75,
     viewer.clientWidth / viewer.clientHeight,
@@ -100,3 +103,5 @@ function animate() {
 }
 
 renderer.setAnimationLoop(animate);
+
+
