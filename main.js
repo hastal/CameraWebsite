@@ -33,7 +33,20 @@ const cameras = [
         origin: "Country",
 
         model: "models/baked1.glb"
-    }
+    },
+
+    {
+    number: "ARCHIVE No. 004",
+    name: "CAMERA NAME",
+    year: "YEAR · XXXX",
+
+    manufacturer: "MANUFACTURER",
+    type: "CAMERA TYPE",
+    format: "FORMAT",
+    origin: "COUNTRY",
+
+    model: "models/baked2.glb"
+}
 
 ];
 
