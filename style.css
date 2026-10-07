@@ -449,3 +449,27 @@ footer {
         padding: 20px 18px;
     }
 }
+
+
+/* ---------- LOADING INDICATOR ---------- */
+
+.viewer-loading {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+
+    z-index: 6;
+    pointer-events: none;
+
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--accent);
+
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.viewer-loading.is-visible {
+    opacity: 1;
+}

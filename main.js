@@ -5,8 +5,6 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 /* =========================================================
    CAMERA DATABASE
-
-   ADD NEW CAMERAS HERE
    ========================================================= */
 
 const cameras = [
@@ -26,13 +24,13 @@ const cameras = [
 
     {
         number: "ARCHIVE No. 002",
-        name: "Camera Two",
-        year: "YEAR · 20XX",
+        name: "blender monkey",
+        year: "YEAR · 2026",
 
-        manufacturer: "Manufacturer",
-        type: "Camera type",
-        format: "35 mm",
-        origin: "Country",
+        manufacturer: "haštálek",
+        type: "glb",
+        format: "0",
+        origin: "Tsechien",
 
         model: "models/baked1.glb"
     },
@@ -70,6 +68,37 @@ const cameraOrigin = document.getElementById('camera-origin');
 
 const previousButton = document.getElementById('previous-camera');
 const nextButton = document.getElementById('next-camera');
+
+
+/* =========================================================
+   LOADING INDICATOR
+   Created here in JavaScript, so the HTML does not change.
+   Its look is controlled by .viewer-loading in style.css
+   ========================================================= */
+
+const loadingLabel = document.createElement('div');
+
+loadingLabel.className = 'viewer-loading';
+
+viewer.parentElement.appendChild(loadingLabel);
+
+
+function showLoading(percent) {
+
+    loadingLabel.textContent = percent === null
+        ? 'LOADING MODEL...'
+        : `LOADING MODEL ${percent}%`;
+
+    loadingLabel.classList.add('is-visible');
+
+}
+
+
+function hideLoading() {
+
+    loadingLabel.classList.remove('is-visible');
+
+}
 
 
 /* =========================================================
@@ -122,7 +151,12 @@ controls.maxDistance = 10;
 
 
 /* =========================================================
-   MODEL LOADER
+   MODEL LOADER + CACHE
+
+   modelCache remembers every model we have already asked for,
+   so each file is downloaded and prepared only ONE time.
+   (Because of this, we no longer throw models away when
+   switching, so the old "disposeModel" function is gone.)
    ========================================================= */
 
 const loader = new GLTFLoader();
@@ -131,63 +165,115 @@ let currentCameraIndex = 0;
 
 let currentModel = null;
 
+/* index number -> a promise that gives us the ready model */
+const modelCache = new Map();
 
-/* =========================================================
-   DISPOSE OLD MODEL
-   ========================================================= */
+/* Used to ignore results from clicks that are already outdated */
+let latestRequest = 0;
 
-function disposeModel(model) {
 
-    scene.remove(model);
+/* Prepares a freshly loaded model: glow, centering, camera distance */
+
+function prepareModel(model) {
+
+    /* Use baked/emissive texture */
 
     model.traverse((object) => {
 
-        if (!object.isMesh) {
-            return;
-        }
+        if (object.isMesh) {
 
+            const materials = Array.isArray(object.material)
+                ? object.material
+                : [object.material];
 
-        /* Remove geometry from GPU memory */
+            materials.forEach((material) => {
 
-        if (object.geometry) {
-            object.geometry.dispose();
-        }
+                if (material.emissive) {
 
+                    material.emissive.set(0xffffff);
 
-        /* Some meshes can have multiple materials */
+                    material.emissiveIntensity = 1;
 
-        const materials = Array.isArray(object.material)
-            ? object.material
-            : [object.material];
+                    material.needsUpdate = true;
 
-
-        materials.forEach((material) => {
-
-            if (!material) {
-                return;
-            }
-
-
-            /* Dispose every texture used by the material */
-
-            for (const property in material) {
-
-                const value = material[property];
-
-                if (value && value.isTexture) {
-                    value.dispose();
                 }
 
-            }
+            });
 
-
-            /* Dispose material */
-
-            material.dispose();
-
-        });
+        }
 
     });
+
+
+    /* Center model */
+
+    const box = new THREE.Box3().setFromObject(model);
+
+    const center = box.getCenter(
+        new THREE.Vector3()
+    );
+
+    const size = box.getSize(
+        new THREE.Vector3()
+    );
+
+    model.position.sub(center);
+
+
+    /* Automatic camera distance */
+
+    const maxDimension = Math.max(
+        size.x,
+        size.y,
+        size.z
+    );
+
+    return {
+        model: model,
+        distance: maxDimension * 2
+    };
+
+}
+
+
+/* Gets a model: from memory if we have it, otherwise downloads it */
+
+function getModel(index) {
+
+    if (!modelCache.has(index)) {
+
+        const url = `${import.meta.env.BASE_URL}${cameras[index].model}`;
+
+        const promise = loader
+            .loadAsync(url, (event) => {
+
+                /* Only show progress for the camera on screen */
+
+                if (index === currentCameraIndex && event.total > 0) {
+
+                    showLoading(
+                        Math.round(event.loaded / event.total * 100)
+                    );
+
+                }
+
+            })
+            .then((gltf) => prepareModel(gltf.scene))
+            .catch((error) => {
+
+                /* Forget the failure so a later click can try again */
+
+                modelCache.delete(index);
+
+                throw error;
+
+            });
+
+        modelCache.set(index, promise);
+
+    }
+
+    return modelCache.get(index);
 
 }
 
@@ -196,9 +282,11 @@ function disposeModel(model) {
    LOAD CAMERA
    ========================================================= */
 
-function loadCamera(index) {
+async function loadCamera(index) {
 
     const cameraData = cameras[index];
+
+    const thisRequest = ++latestRequest;
 
 
     /* ---------- UPDATE TEXT ---------- */
@@ -218,136 +306,96 @@ function loadCamera(index) {
     cameraOrigin.textContent = cameraData.origin;
 
 
-
-    /* ---------- REMOVE OLD MODEL ---------- */
+    /* ---------- HIDE OLD MODEL (kept in memory for later) ---------- */
 
     if (currentModel) {
 
-        disposeModel(currentModel);
+        scene.remove(currentModel);
 
         currentModel = null;
 
     }
 
+    showLoading(null);
 
 
-    /* ---------- LOAD NEW MODEL ---------- */
+    /* ---------- SHOW NEW MODEL ---------- */
 
-    loader.load(
+    try {
 
-        `${import.meta.env.BASE_URL}${cameraData.model}`,
+        const ready = await getModel(index);
 
-        function (gltf) {
+        /* The person clicked again while we waited, so skip this one */
 
-            const model = gltf.scene;
+        if (thisRequest !== latestRequest) {
+            return;
+        }
 
-            currentModel = model;
+        currentModel = ready.model;
 
-            scene.add(model);
+        scene.add(ready.model);
 
+        camera.position.set(0, 0, ready.distance);
 
+        controls.target.set(0, 0, 0);
 
-            /* ---------- USE BAKED / EMISSIVE TEXTURE ---------- */
+        controls.update();
 
-            model.traverse((object) => {
+        hideLoading();
 
-                if (object.isMesh) {
+    } catch (error) {
 
-                    const materials = Array.isArray(object.material)
-                        ? object.material
-                        : [object.material];
+        if (thisRequest === latestRequest) {
 
-
-                    materials.forEach((material) => {
-
-                        if (material.emissive) {
-
-                            material.emissive.set(0xffffff);
-
-                            material.emissiveIntensity = 1;
-
-                            material.needsUpdate = true;
-
-                        }
-
-                    });
-
-                }
-
-            });
-
-
-
-            /* ---------- CENTER MODEL ---------- */
-
-            const box = new THREE.Box3().setFromObject(model);
-
-            const center = box.getCenter(
-                new THREE.Vector3()
-            );
-
-            const size = box.getSize(
-                new THREE.Vector3()
-            );
-
-            model.position.sub(center);
-
-
-
-            /* ---------- AUTOMATIC CAMERA DISTANCE ---------- */
-
-            const maxDimension = Math.max(
-                size.x,
-                size.y,
-                size.z
-            );
-
-            camera.position.set(
-                0,
-                0,
-                maxDimension * 2
-            );
-
-
-
-            /* ---------- RESET ROTATION TARGET ---------- */
-
-            controls.target.set(
-                0,
-                0,
-                0
-            );
-
-            controls.update();
-
-        },
-
-
-        undefined,
-
-
-        function (error) {
-
-            console.error(
-                "Error loading camera:",
-                error
-            );
+            loadingLabel.textContent = 'MODEL FAILED TO LOAD';
 
         }
 
-    );
+        console.error(
+            "Error loading camera:",
+            error
+        );
+
+    }
 
 }
 
 
 /* =========================================================
-   NEXT CAMERA
+   PRELOAD THE OTHER CAMERAS
+   Runs quietly after the first model is on screen.
+   ========================================================= */
+
+async function preloadOtherCameras() {
+
+    for (let i = 0; i < cameras.length; i++) {
+
+        if (i === currentCameraIndex) {
+            continue;
+        }
+
+        try {
+
+            await getModel(i);
+
+        } catch (error) {
+
+            /* Not critical, it will be tried again when clicked */
+
+        }
+
+    }
+
+}
+
+
+/* =========================================================
+   ARROW BUTTONS
    ========================================================= */
 
 nextButton.addEventListener('click', () => {
 
     currentCameraIndex++;
-
 
     if (currentCameraIndex >= cameras.length) {
 
@@ -355,27 +403,20 @@ nextButton.addEventListener('click', () => {
 
     }
 
-
     loadCamera(currentCameraIndex);
 
 });
 
 
-/* =========================================================
-   PREVIOUS CAMERA
-   ========================================================= */
-
 previousButton.addEventListener('click', () => {
 
     currentCameraIndex--;
-
 
     if (currentCameraIndex < 0) {
 
         currentCameraIndex = cameras.length - 1;
 
     }
-
 
     loadCamera(currentCameraIndex);
 
@@ -392,9 +433,7 @@ window.addEventListener('resize', () => {
         viewer.clientWidth /
         viewer.clientHeight;
 
-
     camera.updateProjectionMatrix();
-
 
     renderer.setSize(
         viewer.clientWidth,
@@ -419,12 +458,11 @@ function animate() {
 
 }
 
-
 renderer.setAnimationLoop(animate);
 
 
 /* =========================================================
-   LOAD FIRST CAMERA
+   LOAD FIRST CAMERA, THEN PRELOAD THE REST
    ========================================================= */
 
-loadCamera(currentCameraIndex);
+loadCamera(currentCameraIndex).then(preloadOtherCameras);
