@@ -5,6 +5,8 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 /* =========================================================
    CAMERA DATABASE
+
+   ADD NEW CAMERAS HERE
    ========================================================= */
 
 const cameras = [
@@ -36,17 +38,17 @@ const cameras = [
     },
 
     {
-    number: "ARCHIVE No. 004",
-    name: "CAMERA NAME",
-    year: "YEAR · XXXX",
+        number: "ARCHIVE No. 004",
+        name: "CAMERA NAME",
+        year: "YEAR · XXXX",
 
-    manufacturer: "MANUFACTURER",
-    type: "CAMERA TYPE",
-    format: "FORMAT",
-    origin: "COUNTRY",
+        manufacturer: "MANUFACTURER",
+        type: "CAMERA TYPE",
+        format: "FORMAT",
+        origin: "COUNTRY",
 
-    model: "models/baked2.glb"
-}
+        model: "models/baked2.glb"
+    }
 
 ];
 
@@ -179,7 +181,7 @@ function disposeModel(model) {
             }
 
 
-            /* Dispose the material itself */
+            /* Dispose material */
 
             material.dispose();
 
@@ -245,7 +247,7 @@ function loadCamera(index) {
 
 
 
-            /* Use baked/emissive texture */
+            /* ---------- USE BAKED / EMISSIVE TEXTURE ---------- */
 
             model.traverse((object) => {
 
@@ -254,6 +256,7 @@ function loadCamera(index) {
                     const materials = Array.isArray(object.material)
                         ? object.material
                         : [object.material];
+
 
                     materials.forEach((material) => {
 
@@ -307,9 +310,13 @@ function loadCamera(index) {
 
 
 
-            /* Reset rotation target */
+            /* ---------- RESET ROTATION TARGET ---------- */
 
-            controls.target.set(0, 0, 0);
+            controls.target.set(
+                0,
+                0,
+                0
+            );
 
             controls.update();
 
@@ -334,12 +341,13 @@ function loadCamera(index) {
 
 
 /* =========================================================
-   ARROW BUTTONS
+   NEXT CAMERA
    ========================================================= */
 
 nextButton.addEventListener('click', () => {
 
     currentCameraIndex++;
+
 
     if (currentCameraIndex >= cameras.length) {
 
@@ -347,20 +355,27 @@ nextButton.addEventListener('click', () => {
 
     }
 
+
     loadCamera(currentCameraIndex);
 
 });
 
 
+/* =========================================================
+   PREVIOUS CAMERA
+   ========================================================= */
+
 previousButton.addEventListener('click', () => {
 
     currentCameraIndex--;
+
 
     if (currentCameraIndex < 0) {
 
         currentCameraIndex = cameras.length - 1;
 
     }
+
 
     loadCamera(currentCameraIndex);
 
@@ -377,7 +392,9 @@ window.addEventListener('resize', () => {
         viewer.clientWidth /
         viewer.clientHeight;
 
+
     camera.updateProjectionMatrix();
+
 
     renderer.setSize(
         viewer.clientWidth,
@@ -401,6 +418,7 @@ function animate() {
     );
 
 }
+
 
 renderer.setAnimationLoop(animate);
 
