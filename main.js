@@ -1,3 +1,4 @@
+
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
@@ -5,6 +6,8 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 /* =========================================================
    CAMERA DATABASE
+
+   ADD NEW MODELS HERE EXACTLY LIKE BEFORE
    ========================================================= */
 
 const cameras = [
@@ -32,7 +35,7 @@ const cameras = [
         format: "0",
         origin: "Tsechien",
 
-        model: "models/monkey.glb"
+        model: "models/monkey2.glb"
     },
 
     {
@@ -45,8 +48,8 @@ const cameras = [
         format: "FORMAT",
         origin: "COUNTRY",
 
-        model: "models/baked2.glb"
-    } 
+        model: "models/Tamron12.glb"
+    }
 
 ];
 
@@ -72,8 +75,6 @@ const nextButton = document.getElementById('next-camera');
 
 /* =========================================================
    LOADING INDICATOR
-   Created here in JavaScript, so the HTML does not change.
-   Its look is controlled by .viewer-loading in style.css
    ========================================================= */
 
 const loadingLabel = document.createElement('div');
@@ -110,6 +111,38 @@ const scene = new THREE.Scene();
 scene.background = new THREE.Color(0xC2C2C2);
 
 
+/* =========================================================
+   LIGHTING FOR PRINCIPLED BSDF MATERIALS
+
+   GLB exports Principled BSDF materials as
+   physically based materials in Three.js.
+
+   These lights let their base color, roughness
+   and normal maps affect the rendered appearance.
+   ========================================================= */
+
+const ambientLight = new THREE.AmbientLight(
+    0xffffff,
+    1.5
+);
+
+scene.add(ambientLight);
+
+
+const directionalLight = new THREE.DirectionalLight(
+    0xffffff,
+    3
+);
+
+directionalLight.position.set(5, 8, 6);
+
+scene.add(directionalLight);
+
+
+/* =========================================================
+   CAMERA
+   ========================================================= */
+
 const camera = new THREE.PerspectiveCamera(
     75,
     viewer.clientWidth / viewer.clientHeight,
@@ -117,6 +150,10 @@ const camera = new THREE.PerspectiveCamera(
     1000
 );
 
+
+/* =========================================================
+   RENDERER
+   ========================================================= */
 
 const renderer = new THREE.WebGLRenderer({
     antialias: true
@@ -153,10 +190,9 @@ controls.maxDistance = 10;
 /* =========================================================
    MODEL LOADER + CACHE
 
-   modelCache remembers every model we have already asked for,
-   so each file is downloaded and prepared only ONE time.
-   (Because of this, we no longer throw models away when
-   switching, so the old "disposeModel" function is gone.)
+   Previously loaded models are kept in memory
+   for faster switching.
+
    ========================================================= */
 
 const loader = new GLTFLoader();
@@ -165,47 +201,25 @@ let currentCameraIndex = 0;
 
 let currentModel = null;
 
-/* index number -> a promise that gives us the ready model */
 const modelCache = new Map();
 
-/* Used to ignore results from clicks that are already outdated */
 let latestRequest = 0;
 
 
-/* Prepares a freshly loaded model: glow, centering, camera distance */
+/* =========================================================
+   PREPARE MODEL
+
+   IMPORTANT:
+   We no longer force material.emissive to white.
+
+   This allows the GLB's original PBR materials,
+   including base color, roughness and normal maps,
+   to render as exported from Blender.
+   ========================================================= */
 
 function prepareModel(model) {
 
-    /* Use baked/emissive texture */
-
-    model.traverse((object) => {
-
-        if (object.isMesh) {
-
-            const materials = Array.isArray(object.material)
-                ? object.material
-                : [object.material];
-
-            materials.forEach((material) => {
-
-                if (material.emissive) {
-
-                    material.emissive.set(0xffffff);
-
-                    material.emissiveIntensity = 1;
-
-                    material.needsUpdate = true;
-
-                }
-
-            });
-
-        }
-
-    });
-
-
-    /* Center model */
+    /* ---------- CENTER MODEL ---------- */
 
     const box = new THREE.Box3().setFromObject(model);
 
@@ -220,7 +234,7 @@ function prepareModel(model) {
     model.position.sub(center);
 
 
-    /* Automatic camera distance */
+    /* ---------- AUTOMATIC CAMERA DISTANCE ---------- */
 
     const maxDimension = Math.max(
         size.x,
@@ -236,23 +250,29 @@ function prepareModel(model) {
 }
 
 
-/* Gets a model: from memory if we have it, otherwise downloads it */
+/* =========================================================
+   GET MODEL FROM CACHE OR DOWNLOAD IT
+   ========================================================= */
 
 function getModel(index) {
 
     if (!modelCache.has(index)) {
 
-        const url = `${import.meta.env.BASE_URL}${cameras[index].model}`;
+        const url =
+            `${import.meta.env.BASE_URL}${cameras[index].model}`;
 
         const promise = loader
             .loadAsync(url, (event) => {
 
-                /* Only show progress for the camera on screen */
-
-                if (index === currentCameraIndex && event.total > 0) {
+                if (
+                    index === currentCameraIndex &&
+                    event.total > 0
+                ) {
 
                     showLoading(
-                        Math.round(event.loaded / event.total * 100)
+                        Math.round(
+                            event.loaded / event.total * 100
+                        )
                     );
 
                 }
@@ -260,8 +280,6 @@ function getModel(index) {
             })
             .then((gltf) => prepareModel(gltf.scene))
             .catch((error) => {
-
-                /* Forget the failure so a later click can try again */
 
                 modelCache.delete(index);
 
@@ -306,7 +324,7 @@ async function loadCamera(index) {
     cameraOrigin.textContent = cameraData.origin;
 
 
-    /* ---------- HIDE OLD MODEL (kept in memory for later) ---------- */
+    /* ---------- HIDE OLD MODEL ---------- */
 
     if (currentModel) {
 
@@ -316,30 +334,38 @@ async function loadCamera(index) {
 
     }
 
+
     showLoading(null);
 
 
-    /* ---------- SHOW NEW MODEL ---------- */
+    /* ---------- LOAD NEW MODEL ---------- */
 
     try {
 
         const ready = await getModel(index);
 
-        /* The person clicked again while we waited, so skip this one */
-
         if (thisRequest !== latestRequest) {
             return;
         }
+
 
         currentModel = ready.model;
 
         scene.add(ready.model);
 
-        camera.position.set(0, 0, ready.distance);
+
+        /* ---------- RESET CAMERA POSITION ---------- */
+
+        camera.position.set(
+            0,
+            0,
+            ready.distance
+        );
 
         controls.target.set(0, 0, 0);
 
         controls.update();
+
 
         hideLoading();
 
@@ -347,12 +373,13 @@ async function loadCamera(index) {
 
         if (thisRequest === latestRequest) {
 
-            loadingLabel.textContent = 'MODEL FAILED TO LOAD';
+            loadingLabel.textContent =
+                'MODEL FAILED TO LOAD';
 
         }
 
         console.error(
-            "Error loading camera:",
+            'Error loading camera:',
             error
         );
 
@@ -362,8 +389,7 @@ async function loadCamera(index) {
 
 
 /* =========================================================
-   PRELOAD THE OTHER CAMERAS
-   Runs quietly after the first model is on screen.
+   PRELOAD OTHER CAMERAS
    ========================================================= */
 
 async function preloadOtherCameras() {
@@ -380,7 +406,7 @@ async function preloadOtherCameras() {
 
         } catch (error) {
 
-            /* Not critical, it will be tried again when clicked */
+            /* Retry when selected later */
 
         }
 
