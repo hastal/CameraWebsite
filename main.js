@@ -11,7 +11,7 @@ const cameras = [
 
     {
         number: "ARCHIVE No. 001",
-        name: "Tamron 24-70mm f/2.8 (testing model)",
+        name: "Tamron 24-70mm f/2.8",
         year: "YEAR · 2012",
 
         manufacturer: "Tamron",
@@ -19,7 +19,7 @@ const cameras = [
         format: "24-70 mm",
         origin: "Japan",
 
-        model: "models/Tamron9.glb"
+        model: "models/Tamron11.glb"
     },
 
     {
@@ -32,7 +32,7 @@ const cameras = [
         format: "0",
         origin: "Tsechien",
 
-        model: "models/baked1.glb"
+        model: "models/monkey.glb"
     },
 
     {
