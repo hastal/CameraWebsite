@@ -35,7 +35,7 @@ const cameras = [
         format: "0",
         origin: "Tsechien",
 
-        model: "models/monkey2.glb"
+        model: "models/Tamron14.glb"
     },
 
     {
@@ -123,7 +123,7 @@ scene.background = new THREE.Color(0xC2C2C2);
 
 const ambientLight = new THREE.AmbientLight(
     0xffffff,
-    1.5
+    10.5
 );
 
 scene.add(ambientLight);
@@ -131,7 +131,7 @@ scene.add(ambientLight);
 
 const directionalLight = new THREE.DirectionalLight(
     0xffffff,
-    3
+    15
 );
 
 directionalLight.position.set(5, 8, 6);
