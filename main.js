@@ -112,31 +112,27 @@ scene.background = new THREE.Color(0xC2C2C2);
 
 
 /* =========================================================
-   LIGHTING FOR PRINCIPLED BSDF MATERIALS
-
-   GLB exports Principled BSDF materials as
-   physically based materials in Three.js.
-
-   These lights let their base color, roughness
-   and normal maps affect the rendered appearance.
+   BALANCED STUDIO LIGHTING
    ========================================================= */
 
-const ambientLight = new THREE.AmbientLight(
-    0xffffff,
-    10.5
-);
-
+// General illumination
+const ambientLight = new THREE.AmbientLight(0xffffff, 3);
 scene.add(ambientLight);
 
+// Main light: front-right
+const keyLight = new THREE.DirectionalLight(0xffffff, 2.5);
+keyLight.position.set(5, 7, 6);
+scene.add(keyLight);
 
-const directionalLight = new THREE.DirectionalLight(
-    0xffffff,
-    15
-);
+// Fill light: front-left
+const fillLight = new THREE.DirectionalLight(0xffffff, 5);
+fillLight.position.set(-5, 4, 6);
+scene.add(fillLight);
 
-directionalLight.position.set(5, 8, 6);
-
-scene.add(directionalLight);
+// Rear light: reveals edges and back surfaces
+const rimLight = new THREE.DirectionalLight(0xffffff, 1.5);
+rimLight.position.set(0, 5, -6);
+scene.add(rimLight);
 
 
 /* =========================================================
